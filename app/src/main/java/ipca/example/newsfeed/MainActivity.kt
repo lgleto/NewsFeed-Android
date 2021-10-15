@@ -30,7 +30,7 @@ class MainActivity : AppCompatActivity() {
         listViewPosts.adapter = postsAdapter
 
 
-        Backend.getAllPost("top-headlines?country=pt&category=business&apiKey=<API_KEY>"){ jsonObject ->
+        Backend.getAllPost("top-headlines?country=pt&category=business&apiKey=1765f87e4ebc40229e80fd0f75b6416c"){ jsonObject ->
             if (jsonObject.get("status").equals("ok")) {
                 val jsonArrayArticles = jsonObject.getJSONArray("articles")
                 for ( index in  0 until jsonArrayArticles.length()) {

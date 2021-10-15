@@ -14,35 +14,28 @@ import java.net.URL
 object Backend {
 
     val BASE_AIP = "https://newsapi.org/v2/"
+    private val client = OkHttpClient()
 
     fun getAllPost(endpoint : String, callback: ((JSONObject)->Unit)?){
         GlobalScope.launch(Dispatchers.IO) {
-            val urlc : HttpURLConnection =
-                URL(BASE_AIP + endpoint)
-                    .openConnection() as HttpURLConnection
-            urlc.setRequestProperty("User-Agent","Test")
-            urlc.setRequestProperty("Connection","close")
-            urlc.connectTimeout = 1500
-            urlc.connect()
-            val stream = urlc.inputStream
-            val isReader = InputStreamReader(stream)
-            val brin  = BufferedReader(isReader)
-            var str : String = ""
 
-            var keepReading = true
-            while(keepReading) {
-                val line = brin.readLine()
-                if (line == null){
-                    keepReading = false
-                }else {
-                    str += line
-                }
-            }
+            val request = Request.Builder()
+                .url(BASE_AIP + endpoint)
+                .build()
 
-            val jsonObject = JSONObject(str)
-            GlobalScope.launch (Dispatchers.Main){
-                callback?.let {
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful){
+                    val jsonObjectError = JSONObject()
+                    jsonObjectError.put("status", "error")
+                    jsonObjectError.put("message", "Unexpected code $response")
                     callback.invoke(jsonObject)
+                }else{
+                    val jsonObject = JSONObject(str)
+                    GlobalScope.launch (Dispatchers.Main){
+                        callback?.let {
+                            callback.invoke(jsonObject)
+                        }
+                    }
                 }
             }
         }
