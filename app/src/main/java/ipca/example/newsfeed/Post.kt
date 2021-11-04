@@ -1,24 +1,14 @@
 package ipca.example.newsfeed
 
+import androidx.room.*
 import org.json.JSONObject
 
-class Post {
-
-    var title : String? = null
-    var description : String? = null
-    var urlToImage : String? = null
-    var url : String? = null
-
-    constructor(title: String?, description: String?, urlToImage: String?, url: String?) {
-        this.title = title
-        this.description = description
-        this.urlToImage = urlToImage
-        this.url = url
-    }
-
-    constructor() {
-
-    }
+@Entity
+data class Post ( var title         : String?,
+                  var description   : String?,
+                  var urlToImage    : String?,
+                  @PrimaryKey
+                  var url           : String) {
 
     fun toJson() : JSONObject {
         val jsonObject = JSONObject()
@@ -32,18 +22,28 @@ class Post {
     }
 
     companion object {
-
         fun fromJson(jsonObject: JSONObject) : Post {
-            val post = Post()
-            post.title = jsonObject.getString("title")
-            post.description = jsonObject.getString("description")
-            post.urlToImage = jsonObject.getString("urlToImage")
-            post.url = jsonObject.getString("url")
-
+            val post = Post(
+                jsonObject.getString("title"),
+                jsonObject.getString("description"),
+                jsonObject.getString("urlToImage"),
+                jsonObject.getString("url")
+            )
             return post
         }
-
-
     }
+}
+
+@Dao
+interface PostDao {
+
+    @Query( "SELECT * FROM Post")
+    fun getAllPost() : List<Post>
+
+    @Query("SELECT * FROM Post WHERE url=:urlStr")
+    fun getPostByUrl(urlStr : String) : Post
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(post:Post)
 
 }

@@ -6,6 +6,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.json.JSONObject
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
@@ -14,29 +16,21 @@ import java.net.URL
 object Backend {
 
     val BASE_AIP = "https://newsapi.org/v2/"
-    private val client = OkHttpClient()
 
-    fun getAllPost(endpoint : String, callback: ((JSONObject)->Unit)?){
-        GlobalScope.launch(Dispatchers.IO) {
-
-            val request = Request.Builder()
-                .url(BASE_AIP + endpoint)
-                .build()
-
-            client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful){
-                    val jsonObjectError = JSONObject()
-                    jsonObjectError.put("status", "error")
-                    jsonObjectError.put("message", "Unexpected code $response")
-                    callback.invoke(jsonObject)
-                }else{
-                    val jsonObject = JSONObject(str)
-                    GlobalScope.launch (Dispatchers.Main){
-                        callback?.let {
-                            callback.invoke(jsonObject)
-                        }
-                    }
-                }
+    suspend fun getAllPost(endpoint : String) : JSONObject{
+        val client = OkHttpClient()
+        val request = Request.Builder()
+            .url(BASE_AIP + endpoint)
+            .build()
+        client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful){
+                val jsonObjectError = JSONObject()
+                jsonObjectError.put("status", "error")
+                jsonObjectError.put("message", "Unexpected code $response")
+                return jsonObjectError
+            }else{
+                val jsonObject = JSONObject(response.body!!.string())
+                return jsonObject
             }
         }
     }
